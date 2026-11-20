@@ -34,7 +34,7 @@ export default function ThreeBackground() {
         metalness: 0.05,
       })
 
-    // Create floating shapes — keep it minimal (6-8 shapes)
+    // Create floating shapes — distributed strictly on left and right flanks
     const shapes = []
     const geometries = [
       new THREE.SphereGeometry(1, 32, 32),
@@ -46,25 +46,32 @@ export default function ThreeBackground() {
     // Brand-derived pastel colors
     const colors = [0x185b42, 0x3a8060, 0x9bbfa9, 0xe9f4ec, 0x277b5d, 0xd9f4e4]
 
-    for (let i = 0; i < 7; i++) {
+    // Scatter 8 shapes exclusively along the left (X <= -11) and right (X >= 11) flanks
+    for (let i = 0; i < 8; i++) {
       const geometry = geometries[i % geometries.length]
       const material = clayMaterial(colors[i % colors.length])
       const mesh = new THREE.Mesh(geometry, material)
 
-      // Scatter across the viewport
-      mesh.position.set(
-        (Math.random() - 0.5) * 30,
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 10 - 5,
-      )
+      const isLeft = i % 2 === 0
+      const xSpan = 11 + Math.random() * 11 // Range: 11 to 22 units from center
+      const posX = isLeft ? -xSpan : xSpan
+      const posY = (Math.random() - 0.5) * 24
+      const posZ = (Math.random() - 0.5) * 8 - 4
+
+      mesh.position.set(posX, posY, posZ)
       mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
 
-      // Store animation parameters on the mesh
+      // Store animation parameters
       mesh.userData = {
-        rotationSpeed: { x: (Math.random() - 0.5) * 0.005, y: (Math.random() - 0.5) * 0.005 },
-        floatSpeed: 0.3 + Math.random() * 0.5,
-        floatAmplitude: 0.3 + Math.random() * 0.5,
-        initialY: mesh.position.y,
+        rotationSpeed: {
+          x: (Math.random() - 0.5) * 0.004,
+          y: (Math.random() - 0.5) * 0.004,
+        },
+        floatSpeed: 0.25 + Math.random() * 0.45,
+        floatAmplitude: 0.35 + Math.random() * 0.5,
+        initialY: posY,
+        initialX: posX,
+        driftSpeed: 0.2 + Math.random() * 0.3,
       }
 
       scene.add(mesh)
@@ -80,10 +87,11 @@ export default function ThreeBackground() {
       const elapsed = clock.getElapsedTime()
 
       for (const shape of shapes) {
-        const { rotationSpeed, floatSpeed, floatAmplitude, initialY } = shape.userData
+        const { rotationSpeed, floatSpeed, floatAmplitude, initialY, initialX, driftSpeed } = shape.userData
         shape.rotation.x += rotationSpeed.x
         shape.rotation.y += rotationSpeed.y
         shape.position.y = initialY + Math.sin(elapsed * floatSpeed) * floatAmplitude
+        shape.position.x = initialX + Math.cos(elapsed * driftSpeed) * 0.25
       }
 
       renderer.render(scene, camera)
