@@ -36,6 +36,115 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
+/* ==========================================================================
+   Smooth 3D Clay Preloader Screen
+   ========================================================================== */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(243, 246, 242, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: opacity 0.6s cubic-bezier(0.65, 0, 0.35, 1),
+              visibility 0.6s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.loading-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 2.2rem 2.5rem;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 2px 2px 5px var(--clay-highlight),
+    inset -2px -2px 5px var(--clay-shadow-inner),
+    0 16px 40px var(--clay-shadow-outer);
+  animation: pulseClay 2.4s ease-in-out infinite;
+}
+
+.loading-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: #e9f4ec;
+  color: var(--green);
+  box-shadow:
+    inset 2px 2px 4px var(--clay-highlight),
+    inset -2px -2px 4px var(--clay-shadow-inner),
+    2px 4px 12px rgba(22, 57, 43, 0.08);
+}
+
+.loading-leaf {
+  animation: floatLeaf 2s ease-in-out infinite;
+}
+
+.loading-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.loading-text strong {
+  font-size: 1.25rem;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+.loading-text span {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.loading-bar {
+  width: 140px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #e4ebe6;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 2px var(--clay-shadow-inner);
+}
+
+.loading-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: var(--green);
+  border-radius: 9999px;
+  animation: loadProgress 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseClay {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes floatLeaf {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(6deg); }
+}
+
+@keyframes loadProgress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(20%); }
+  100% { transform: translateX(100%); }
+}
+
 .three-bg {
   position: fixed;
   top: 0;
@@ -100,6 +209,32 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
 }
 
 /* ==========================================================================
+   Staggered Entrance Animation Sequence
+   ========================================================================== */
+
+@keyframes clayEntranceUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes clayEntranceDown {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
    Floating "Dynamic Island" Navigation Bar
    ========================================================================== */
 
@@ -121,6 +256,8 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
     0 8px 24px var(--clay-shadow-outer),
     0 2px 6px rgba(22, 57, 43, 0.04);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: clayEntranceDown 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: 0.20s;
 }
 
 .site-header:hover {
@@ -219,6 +356,8 @@ main, footer {
 }
 
 main { padding-block: 20px 0; }
+
+/* 1. Hero Banner comes first */
 .hero {
   min-height: 252px;
   display: flex;
@@ -236,14 +375,23 @@ main { padding-block: 20px 0; }
     inset 3px 3px 6px rgba(255, 255, 255, 0.15),
     inset -3px -3px 6px rgba(0, 0, 0, 0.2),
     10px 14px 34px rgba(16, 55, 42, 0.22);
+  animation: clayEntranceUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: 0.05s;
 }
 .hero-copy { padding: 32px clamp(24px, 4vw, 49px); }
 .hero-region { display: flex; align-items: center; gap: .42rem; margin: 0 0 .75rem; color: #d9f4e4; font-size: .77rem; font-weight: 700; letter-spacing: .15em; }
 .hero h1 { max-width: 740px; margin: 0; font-weight: 720; font-size: clamp(2.05rem, 4.5vw, 4.05rem); line-height: 1; letter-spacing: -.056em; text-wrap: balance; }
 .hero-description { margin: 1rem 0 0; max-width: 460px; color: #e1eee6; font-size: 1.05rem; line-height: 1.55; }
 
+/* 3. Location Bar & Dashboard info/input cards */
 .location-bar, .location-control, .location-meta { display: flex; align-items: center; }
-.location-bar { min-height: 81px; justify-content: space-between; gap: .75rem; }
+.location-bar {
+  min-height: 81px;
+  justify-content: space-between;
+  gap: .75rem;
+  animation: clayEntranceUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: 0.32s;
+}
 .location-control { gap: .85rem; }
 .location-label { display: inline-flex; align-items: center; gap: .38rem; color: #355a49; font-size: .9rem; font-weight: 650; }
 .segmented {
@@ -309,7 +457,13 @@ main { padding-block: 20px 0; }
 }
 .source-notice span { display: flex; align-items: center; gap: .55rem; }
 
-.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 19px; }
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 19px;
+  animation: clayEntranceUp 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: 0.40s;
+}
 .panel {
   min-width: 0;
   background: rgba(255, 255, 255, 0.78);
@@ -475,8 +629,41 @@ main { padding-block: 20px 0; }
 .empty-state, .chart-loading { min-height: 145px; display: grid; justify-items: center; align-content: center; gap: .6rem; padding: 1rem; color: var(--muted); text-align: center; }
 .empty-state p { margin: 0; }
 
-.assessment { margin-top: 19px; }
+/* ==========================================================================
+   180-Degree 3D Flip Animation on Risk Check
+   ========================================================================== */
+
+.assessment {
+  margin-top: 19px;
+  perspective: 1400px;
+}
 .assessment:focus { outline: none; }
+
+.assessment > .panel {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  animation: clayFlipIn 0.95s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+}
+
+/* Stagger the second card (Recommendations) for a layered card-flip reveal */
+.assessment > .panel:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+@keyframes clayFlipIn {
+  0% {
+    opacity: 0;
+    transform: rotateY(-180deg) scale(0.88);
+  }
+  35% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
 .risk-card {
   display: flex;
   align-items: center;
@@ -542,7 +729,12 @@ main { padding-block: 20px 0; }
 .alternatives { margin: .7rem 0 0; color: var(--muted); font-size: .87rem; }
 .alternatives strong { color: var(--ink); margin-right: .27rem; }
 
-.forecast { margin-top: 19px; }
+/* 4. Forecast Graph container & collapsible list */
+.forecast {
+  margin-top: 19px;
+  animation: clayEntranceUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: 0.52s;
+}
 .forecast-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .85rem; }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: .85rem; color: var(--muted); font-size: .81rem; }
 .legend span { display: flex; align-items: center; gap: .32rem; }
@@ -697,4 +889,13 @@ footer a:hover { text-decoration: underline; }
   *, *::before, *::after { transition: none !important; }
   .three-bg { display: none; }
   .panel:hover { transform: none; }
+  .loading-screen { display: none !important; }
+  .hero, .site-header, .location-bar, .dashboard-grid, .forecast {
+    animation: none !important;
+    transform: none !important;
+  }
+  .assessment > .panel {
+    animation: none !important;
+    transform: none !important;
+  }
 }

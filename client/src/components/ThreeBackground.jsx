@@ -1,11 +1,29 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
+// Procedural organic leaf geometry with gentle beveling
+function createLeafGeometry() {
+  const shape = new THREE.Shape()
+  shape.moveTo(0, -1.2) // Stem base
+  // Right side curve to tip
+  shape.bezierCurveTo(0.85, -0.5, 1.15, 0.5, 0, 1.4)
+  // Left side curve back to stem base
+  shape.bezierCurveTo(-1.15, 0.5, -0.85, -0.5, 0, -1.2)
+
+  return new THREE.ExtrudeGeometry(shape, {
+    depth: 0.08,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    steps: 1,
+    bevelSize: 0.04,
+    bevelThickness: 0.04,
+  })
+}
+
 export default function ThreeBackground() {
   const containerRef = useRef(null)
 
   useEffect(() => {
-    // Respect user preference
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const container = containerRef.current
@@ -20,65 +38,56 @@ export default function ThreeBackground() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     container.appendChild(renderer.domElement)
 
-    // Soft lighting
-    scene.add(new THREE.AmbientLight(0xe9f4ec, 0.8))
-    const directional = new THREE.DirectionalLight(0xffffff, 0.6)
-    directional.position.set(5, 10, 7)
-    scene.add(directional)
+    // Natural lighting for fresh outdoor ambiance
+    scene.add(new THREE.AmbientLight(0xe9f4ec, 0.85))
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.65)
+    sunLight.position.set(6, 12, 8)
+    scene.add(sunLight)
 
-    // Clay-like material using the brand green palette
-    const clayMaterial = (color) =>
+    // Soft clay material for organic botanical leaves
+    const leafMaterial = (color) =>
       new THREE.MeshStandardMaterial({
         color,
-        roughness: 0.85,
+        roughness: 0.8,
         metalness: 0.05,
+        side: THREE.DoubleSide,
       })
 
-    // Create floating shapes — distributed strictly on left and right flanks
-    const shapes = []
-    const geometries = [
-      new THREE.SphereGeometry(1, 32, 32),
-      new THREE.TorusGeometry(0.8, 0.35, 16, 32),
-      new THREE.IcosahedronGeometry(0.9, 0),
-      new THREE.OctahedronGeometry(0.8, 0),
-      new THREE.CapsuleGeometry(0.5, 1, 8, 16),
-    ]
-    // Brand-derived pastel colors
-    const colors = [0x185b42, 0x3a8060, 0x9bbfa9, 0xe9f4ec, 0x277b5d, 0xd9f4e4]
+    const leafGeometry = createLeafGeometry()
+    // Fresh botanical green palette (lush green, sage, mint, emerald)
+    const leafColors = [0x185b42, 0x23805d, 0x3a8060, 0x277b5d, 0x4a9d77, 0x1d6a4d]
 
-    // Scatter 8 shapes exclusively along the left (X <= -11) and right (X >= 11) flanks
-    for (let i = 0; i < 8; i++) {
-      const geometry = geometries[i % geometries.length]
-      const material = clayMaterial(colors[i % colors.length])
-      const mesh = new THREE.Mesh(geometry, material)
+    const leaves = []
+    // Scatter 10 leaves strictly along the left (X <= -11) and right (X >= 11) flanks
+    for (let i = 0; i < 10; i++) {
+      const material = leafMaterial(leafColors[i % leafColors.length])
+      const mesh = new THREE.Mesh(leafGeometry, material)
 
       const isLeft = i % 2 === 0
-      const xSpan = 11 + Math.random() * 11 // Range: 11 to 22 units from center
+      const xSpan = 11 + Math.random() * 10 // Range: 11 to 21 units from center
       const posX = isLeft ? -xSpan : xSpan
-      const posY = (Math.random() - 0.5) * 24
+      const posY = (Math.random() - 0.5) * 26
       const posZ = (Math.random() - 0.5) * 8 - 4
+      const scale = 0.75 + Math.random() * 0.45
 
       mesh.position.set(posX, posY, posZ)
-      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
+      mesh.scale.set(scale, scale, scale)
+      mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI)
 
-      // Store animation parameters
       mesh.userData = {
-        rotationSpeed: {
-          x: (Math.random() - 0.5) * 0.004,
-          y: (Math.random() - 0.5) * 0.004,
-        },
-        floatSpeed: 0.25 + Math.random() * 0.45,
-        floatAmplitude: 0.35 + Math.random() * 0.5,
-        initialY: posY,
+        rotSpeedX: (Math.random() - 0.5) * 0.008,
+        rotSpeedY: (Math.random() - 0.5) * 0.008,
+        flutterSpeed: 1.2 + Math.random() * 1.0,
+        swaySpeed: 0.6 + Math.random() * 0.8,
+        fallSpeed: 0.018 + Math.random() * 0.022,
         initialX: posX,
-        driftSpeed: 0.2 + Math.random() * 0.3,
       }
 
       scene.add(mesh)
-      shapes.push(mesh)
+      leaves.push(mesh)
     }
 
-    // Animation loop
+    // Animation loop: natural falling and fluttering leaves
     let animationId
     const clock = new THREE.Clock()
 
@@ -86,19 +95,28 @@ export default function ThreeBackground() {
       animationId = requestAnimationFrame(animate)
       const elapsed = clock.getElapsedTime()
 
-      for (const shape of shapes) {
-        const { rotationSpeed, floatSpeed, floatAmplitude, initialY, initialX, driftSpeed } = shape.userData
-        shape.rotation.x += rotationSpeed.x
-        shape.rotation.y += rotationSpeed.y
-        shape.position.y = initialY + Math.sin(elapsed * floatSpeed) * floatAmplitude
-        shape.position.x = initialX + Math.cos(elapsed * driftSpeed) * 0.25
+      for (const leaf of leaves) {
+        const data = leaf.userData
+
+        // Tumbling leaf flutter
+        leaf.rotation.x += data.rotSpeedX
+        leaf.rotation.y += data.rotSpeedY
+        leaf.rotation.z = Math.sin(elapsed * data.flutterSpeed) * 0.35
+
+        // Gentle downward drift
+        leaf.position.y -= data.fallSpeed
+        if (leaf.position.y < -14) {
+          leaf.position.y = 14
+        }
+
+        // Sinusoidal breeze oscillation
+        leaf.position.x = data.initialX + Math.sin(elapsed * data.swaySpeed) * 0.45
       }
 
       renderer.render(scene, camera)
     }
     animate()
 
-    // Handle resize
     function onResize() {
       camera.aspect = window.innerWidth / window.innerHeight
       camera.updateProjectionMatrix()
@@ -106,14 +124,13 @@ export default function ThreeBackground() {
     }
     window.addEventListener('resize', onResize)
 
-    // Cleanup
     return () => {
       cancelAnimationFrame(animationId)
       window.removeEventListener('resize', onResize)
       renderer.dispose()
-      for (const shape of shapes) {
-        shape.geometry.dispose()
-        shape.material.dispose()
+      leafGeometry.dispose()
+      for (const leaf of leaves) {
+        leaf.material.dispose()
       }
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement)
