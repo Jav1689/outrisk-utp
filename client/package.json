@@ -7,9 +7,10 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "app-macos": "vite & (cd ../server && source venv/bin/activate && uvicorn main:app --reload --port 8000)",
-    "init": "pnpm install --frozen-lockfile && cd ../server && python -m venv venv && ./venv/Scripts/python.exe -m pip install -r requirements.txt && ./venv/Scripts/python.exe -m model.train",
-    "app": "vite & (cd ../server && ./venv/Scripts/python.exe -m uvicorn main:app --reload --port 8000)"
+    "init:unix": "pnpm install --frozen-lockfile && cd ../server && python3 -m venv venv && . ./venv/bin/activate && pip install -r requirements.txt && python3 -m model.train",
+    "init:win": "pnpm install --frozen-lockfile && cd ../server && python -m venv venv && venv\\Scripts\\python.exe -m pip install -r requirements.txt && venv\\Scripts\\python.exe -m model.train",
+    "app:unix": "vite & (cd ../server && . venv/bin/activate && uvicorn main:app --reload --port 8000)",
+    "app:win": "start /B vite && cd ../server && venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000"
   },
   "dependencies": {
     "axios": "1.15.0",
