@@ -25,13 +25,13 @@ def predict_hourly(model, rows):
     }
     if usable.any():
         probabilities = model.predict_proba(prepare_model_input(frame.loc[usable]))
-        for index, chances in zip(frame.index[usable], probabilities, strict=True):
+        for index, chances in zip(frame.index[usable], probabilities):
             row = rows[index]
             model_risk = Risk(int(model.classes_[np.argmax(chances)]))
             threshold_risk, factors = assess_conditions(row)
             level = max(model_risk, threshold_risk)
             scores = {Risk(int(key)).label: round(float(value) * 100, 1)
-                      for key, value in zip(model.classes_, chances, strict=True)}
+                      for key, value in zip(model.classes_, chances)}
             predictions[index] = {
                 "risk_level": level.label,
                 "confidence": scores[level.label],
