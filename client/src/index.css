@@ -45,7 +45,11 @@ main { padding-block: 29px 0; }
   border-radius: 21px;
   overflow: hidden;
   color: #fff;
-  background: linear-gradient(90deg, #0b2a20d9 0%, #0b2a208c 38%, #0b2a2020 80%), #124130 url('/perak-hills.webp') center 52% / cover no-repeat;
+  background-color: #10372a;
+  background-image: linear-gradient(90deg, #10372a 37%, #10372ad9 44%, #10372a3b 67%, #10372a0d 100%), url('/outdoor-football.webp');
+  background-position: center, right 37%;
+  background-size: cover, max(63%, 520px) auto;
+  background-repeat: no-repeat;
 }
 .hero-copy { padding: 32px clamp(24px, 4vw, 49px); }
 .hero-region { display: flex; align-items: center; gap: .42rem; margin: 0 0 .75rem; color: #d9f4e4; font-size: .77rem; font-weight: 700; letter-spacing: .15em; }
@@ -182,7 +186,14 @@ footer a:hover { text-decoration: underline; }
   .site-header nav { gap: .75rem; }
   .timezone { display: none; }
   main { padding-top: 14px; }
-  .hero { min-height: 210px; border-radius: 15px; background-position: 58% center; }
+  .hero {
+    min-height: 310px;
+    align-items: flex-start;
+    border-radius: 15px;
+    background-image: linear-gradient(180deg, #10372a 35%, #10372ae0 44%, #10372a50 60%, #10372a0d 83%), url('/outdoor-football.webp');
+    background-position: center, center clamp(72px, calc(195px - 18vw), 125px);
+    background-size: cover, 100% auto;
+  }
   .hero-copy { padding: 20px; }
   .hero h1 { max-width: 370px; }
   .hero-description { font-size: .97rem; }

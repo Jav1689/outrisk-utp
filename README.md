@@ -52,9 +52,9 @@ The Random Forest learns from synthetic weather labeled with the thresholds in [
 
 The weather forecast spans seven days. The air-quality feed may have a shorter horizon. When a model input is missing, risk stays unavailable and the dashboard keeps displaying the available weather. Use the dashboard for planning and check [official MET Malaysia alerts](https://www.met.gov.my/) before heading out.
 
-Weather and air quality are provided by [Open-Meteo](https://open-meteo.com/). Air-quality forecasts use [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/) data. The banner is an AI-generated landscape inspired by Perak.
+Weather and air quality are provided by [Open-Meteo](https://open-meteo.com/). Air-quality forecasts use [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/) data.
 
-The banner at `client/public/perak-hills.webp` was generated with ImageGen. The prompt requested a wide editorial photograph inspired by the tropical countryside of Perak, with forested limestone hills, low morning mist, dense vegetation, overcast blue-green light, clouds on the upper right, and a dark left third for white text. The prompt excluded people, buildings, logos, labels, and text.
+Banner photo by [Yogendra Singh on Pexels](https://www.pexels.com/photo/men-playing-soccer-on-field-1375148/), used under the [Pexels License](https://www.pexels.com/license/).
 
 ## Verify and build
 
