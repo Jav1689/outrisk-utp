@@ -6,15 +6,18 @@ import pandas as pd
 
 WEATHER_FIELDS = {
     "temperature_2m": "temperature",
+    "apparent_temperature": "apparent_temperature",
     "relative_humidity_2m": "humidity",
     "precipitation": "precipitation",
     "weather_code": "weather_code",
     "uv_index": "uv_index",
 }
 AIR_FIELDS = {"us_aqi": "aqi", "pm2_5": "pm25"}
-MODEL_FEATURES = ("temperature", "humidity", "precipitation", "uv_index", "aqi", "weather_code")
+RISK_FIELDS = ("temperature", "apparent_temperature", "precipitation", "uv_index", "aqi", "weather_code")
+MODEL_FEATURES = (*RISK_FIELDS, "strenuous")
 FEATURE_RANGES = {
     "temperature": (20, 40),
+    "apparent_temperature": (20, 50),
     "humidity": (40, 100),
     "precipitation": (0, 50),
     "uv_index": (0, 12),
@@ -23,6 +26,7 @@ FEATURE_RANGES = {
 }
 PHYSICAL_LIMITS = {
     "temperature": (-10, 60),
+    "apparent_temperature": (-20, 70),
     "humidity": (0, 100),
     "precipitation": (0, 500),
     "uv_index": (0, 30),

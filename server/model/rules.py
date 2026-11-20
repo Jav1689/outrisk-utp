@@ -1,4 +1,17 @@
 from enum import IntEnum
+from math import isfinite
+
+from data.preprocess import RISK_FIELDS
+
+
+STRENUOUS_ACTIVITIES = {"jogging", "cycling", "sports"}
+THUNDERSTORM_CODES = {95, 96, 97, 99}
+HEAVY_PRECIPITATION_CODES = {65, 67, 75, 82, 86}
+WET_WEATHER_CODES = {51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86}
+HEAT_CAUTION_C = 35
+STRENUOUS_HEAT_CAUTION_C = 32
+HEAT_HAZARD_C = 40
+AIR_TEMPERATURE_HAZARD_C = 37
 
 
 class Risk(IntEnum):
@@ -11,30 +24,33 @@ class Risk(IntEnum):
         return self.name.title()
 
 
-def assess_conditions(row):
-    """Return the project's threshold class plus the factors that increased risk."""
-    temperature, humidity, precipitation, uv, aqi, code = (
-        row[name] for name in ("temperature", "humidity", "precipitation", "uv_index", "aqi", "weather_code")
-    )
-    hazardous = [
-        (temperature < 18 or temperature > 36, "Extreme temperature"),
-        (humidity > 85, "Very high humidity"),
-        (precipitation > 5, "Heavy precipitation"),
-        (uv > 8, "Very high UV"),
-        (aqi > 100, "Elevated US AQI"),
-        (code >= 71, "Thunderstorm" if code >= 95 else "Adverse weather"),
+def assess_conditions(row, *, strenuous=False):
+    """Apply the outdoor planning rules to a forecast hour."""
+    values = [row.get(field) for field in RISK_FIELDS]
+    temperature, feels_like, precipitation, uv, aqi, code = [
+        value if value is not None and isfinite(value) else None for value in values
     ]
-    caution = [
-        (temperature < 22 or temperature > 32, "Temperature outside the comfortable range"),
-        (humidity > 70, "High humidity"),
-        (precipitation > 0, "Precipitation"),
-        (uv > 5, "Elevated UV"),
-        (aqi > 50, "Moderate US AQI"),
-        (code in {45, 48} or 51 <= code <= 67, "Fog, drizzle or rain"),
+    hazardous = [
+        (code in THUNDERSTORM_CODES, "Thunderstorm"),
+        (code in HEAVY_PRECIPITATION_CODES or (precipitation is not None and precipitation >= 10), "Heavy precipitation"),
+        (feels_like is not None and feels_like >= HEAT_HAZARD_C, "Severe feels-like heat"),
+        (temperature is not None and temperature >= AIR_TEMPERATURE_HAZARD_C, "Very high air temperature"),
+        (aqi is not None and aqi > 150, "Unhealthy U.S. AQI"),
+        (uv is not None and uv >= 11, "Extreme UV"),
     ]
     severe_factors = [label for matches, label in hazardous if matches]
     if severe_factors:
         return Risk.HAZARDOUS, severe_factors
-    moderate_factors = [label for matches, label in caution if matches]
-    level = Risk.CAUTION if len(moderate_factors) >= 2 else Risk.SAFE
-    return level, moderate_factors
+    if None in (temperature, feels_like, precipitation, uv, aqi, code):
+        return None, []
+
+    heat_threshold = STRENUOUS_HEAT_CAUTION_C if strenuous else HEAT_CAUTION_C
+    caution = [
+        (temperature >= HEAT_CAUTION_C or feels_like >= heat_threshold, "Heat exposure"),
+        (code in {45, 48}, "Fog"),
+        (code in WET_WEATHER_CODES or precipitation >= 0.1, "Rain or drizzle"),
+        (uv >= 6, "High UV"),
+        (aqi > 100, "U.S. AQI unhealthy for sensitive groups"),
+    ]
+    factors = [label for matches, label in caution if matches]
+    return (Risk.CAUTION if factors else Risk.SAFE), factors

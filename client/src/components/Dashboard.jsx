@@ -14,40 +14,49 @@ export default function Dashboard() {
   const [selection, setSelection] = useState(() => ({ location: 'UTP', activity: 'jogging', ...malaysiaNow() }))
   const [source, setSource] = useState('live')
   const [requestNumber, setRequestNumber] = useState(0)
-  const [readings, setReadings] = useState(null)
+  const [currentReading, setCurrentReading] = useState(null)
+  const [forecastReading, setForecastReading] = useState(null)
   const [assessment, setAssessment] = useState(null)
   const [formError, setFormError] = useState('')
   const [checking, setChecking] = useState(false)
   const activeCheck = useRef(null)
   const resultAnchor = useRef(null)
   const { date: today } = malaysiaNow()
-  const location = selection.location
+  const { location, activity } = selection
   const requestKey = `${location}/${source}/${requestNumber}`
+  const forecastKey = `${requestKey}/${activity}`
 
   useEffect(() => {
     const controller = new AbortController()
-    function receive(name, value) {
-      if (controller.signal.aborted) return
-      setReadings(previous => ({ ...(previous?.key === requestKey ? previous : { key: requestKey }), [name]: value }))
+    function receive(reading) {
+      if (!controller.signal.aborted) setCurrentReading({ key: requestKey, ...reading })
     }
     getCurrentWeather(location, source, controller.signal).then(
-      payload => receive('current', { data: payload.current }),
-      error => receive('current', { error: errorMessage(error) }),
-    )
-    getForecastRisk(location, source, controller.signal).then(
-      rows => receive('forecast', { data: rows }),
-      error => receive('forecast', { error: errorMessage(error) }),
+      payload => receive({ data: payload.current }),
+      error => receive({ error: errorMessage(error) }),
     )
     return () => controller.abort()
   }, [location, source, requestKey])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    function receive(reading) {
+      if (!controller.signal.aborted) setForecastReading({ key: forecastKey, ...reading })
+    }
+    getForecastRisk(location, source, activity, controller.signal).then(
+      rows => receive({ data: rows }),
+      error => receive({ error: errorMessage(error) }),
+    )
+    return () => controller.abort()
+  }, [location, source, activity, forecastKey])
 
   useEffect(() => () => activeCheck.current?.abort(), [])
   useEffect(() => {
     if (assessment) resultAnchor.current?.focus({ preventScroll: true })
   }, [assessment])
 
-  const current = (readings?.key === requestKey && readings.current) || emptyReading
-  const forecast = (readings?.key === requestKey && readings.forecast) || emptyReading
+  const current = currentReading?.key === requestKey ? currentReading : emptyReading
+  const forecast = forecastReading?.key === forecastKey ? forecastReading : emptyReading
   const unavailable = Boolean(current.error || forecast.error)
   const status = source === 'sample' ? 'Sample data' : unavailable ? 'Data unavailable' : current.data ? 'Live weather' : 'Connecting'
 
@@ -151,7 +160,7 @@ export default function Dashboard() {
           </div>
         )}
         <Suspense fallback={<section className="panel forecast chart-loading" id="forecast" role="status">Loading forecast…</section>}>
-          <ForecastChart key={requestKey} rows={forecast.data || []} location={location} loading={!forecast.data && !forecast.error}
+          <ForecastChart key={requestKey} rows={forecast.data || []} location={location} activity={activity} loading={!forecast.data && !forecast.error}
             error={forecast.error} retry={retry} onChoose={chooseHour} today={today} />
         </Suspense>
       </main>

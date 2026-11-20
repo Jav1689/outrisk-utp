@@ -15,9 +15,11 @@ def sample_weather(location, now):
         heat = 0.5 + 0.5 * math.cos(math.tau * (hour - 14) / 24)
         storm = (day + offset) % 3 == 0 and 15 <= hour <= 17
         drizzle = (day + offset) % 3 == 1 and 16 <= hour <= 18
+        temperature = round(24 + 8.0 * heat + (day % 3) * 0.7 + offset * 0.6, 1)
         hours.append({
             "datetime": moment.isoformat(timespec="minutes")[:16],
-            "temperature": round(24 + 8.0 * heat + (day % 3) * 0.7 + offset * 0.6, 1),
+            "temperature": temperature,
+            "apparent_temperature": round(temperature + 2 + 3 * sun, 1),
             "humidity": round(63 + 13 * (1 - heat) + (16 if storm else 5 if drizzle else 0), 1),
             "precipitation": 6.8 if storm else 1.3 if drizzle else 0,
             "weather_code": 95 if storm else 61 if drizzle else 2,
