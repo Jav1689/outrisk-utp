@@ -12,23 +12,29 @@ from model.rules import Risk, assess_conditions
 
 
 MODEL_PATH = Path(__file__).with_name("risk_model.pkl")
-MODEL_VERSION = 1
+MODEL_VERSION = 2
 
 
 def generate_training_data(n_samples=15_000):
     rng = np.random.default_rng(42)
     pool_size = n_samples * 25
-    codes = [0, 1, 2, 3, 45, 48, 51, 53, 55, 61, 63, 65, 71, 73, 75, 80, 81, 82, 95, 96, 99]
-    code_weights = np.array([18, 13, 18, 16, 2, 1, 4, 4, 4, 4, 3, 2, 1, 1, 1, 2, 2, 2, 2, 1, 1])
+    codes = [0, 1, 2, 3, 45, 51, 53, 55, 61, 63, 65, 80, 81, 82, 95, 96, 97, 99]
+    code_weights = np.array([18, 13, 18, 16, 2, 4, 4, 4, 4, 3, 2, 2, 2, 2, 2, 1, 1, 1])
+    temperature = rng.uniform(20, 43, pool_size)
+    humidity = rng.uniform(48, 100, pool_size)
     samples = pd.DataFrame({
-        "temperature": rng.uniform(14, 45, pool_size),
-        "humidity": rng.uniform(30, 100, pool_size),
+        "temperature": temperature,
+        "apparent_temperature": temperature + (humidity - 55) * 0.11 + rng.normal(0, 2.5, pool_size),
         "precipitation": np.where(rng.random(pool_size) < 0.62, 0, rng.exponential(3, pool_size)),
-        "uv_index": rng.uniform(0, 14, pool_size),
+        "uv_index": np.where(rng.random(pool_size) < 0.35, 0, rng.uniform(0, 14, pool_size)),
         "aqi": rng.exponential(42, pool_size).clip(0, 500),
         "weather_code": rng.choice(codes, pool_size, p=code_weights / code_weights.sum()),
+        "strenuous": rng.integers(0, 2, pool_size),
     })
-    labels = [assess_conditions(sample)[0].value for sample in samples.to_dict("records")]
+    labels = [
+        assess_conditions(sample, strenuous=bool(sample["strenuous"]))[0].value
+        for sample in samples.to_dict("records")
+    ]
     samples["risk_level"] = labels
     groups = []
     for level in Risk:

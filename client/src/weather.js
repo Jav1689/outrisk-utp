@@ -50,7 +50,8 @@ const WEATHER = {
   71: ['Light snow', CloudSnow], 73: ['Moderate snow', CloudSnow], 75: ['Heavy snow', CloudSnow], 77: ['Snow grains', CloudSnow],
   80: ['Light showers', CloudRain], 81: ['Moderate showers', CloudRain], 82: ['Heavy showers', CloudRain],
   85: ['Light snow showers', CloudSnow], 86: ['Heavy snow showers', CloudSnow],
-  95: ['Thunderstorm', CloudLightning], 96: ['Thunderstorm with hail', CloudLightning], 99: ['Thunderstorm with heavy hail', CloudLightning],
+  95: ['Thunderstorm', CloudLightning], 96: ['Thunderstorm with hail', CloudLightning],
+  97: ['Heavy thunderstorm', CloudLightning], 99: ['Thunderstorm with heavy hail', CloudLightning],
 }
 
 export function weatherDescription(code, isDay) {

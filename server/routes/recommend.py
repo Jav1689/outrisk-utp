@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Request
 
 from data.fetch_weather import TIMEZONE
+from model.rules import HEAT_CAUTION_C, STRENUOUS_ACTIVITIES, STRENUOUS_HEAT_CAUTION_C, THUNDERSTORM_CODES, WET_WEATHER_CODES
 from routes.predict import PredictionRequest, assess_activity
 
 
@@ -26,16 +27,23 @@ ALTERNATIVES = {
 
 def generate_recommendations(activity, risk_level, weather_data):
     precautions = ["Check local weather alerts before heading out."]
-    if weather_data["temperature"] > 32 or weather_data["humidity"] > 70:
-        precautions.append("Bring water and take breaks in the shade.")
-    if weather_data["uv_index"] > 5:
+    heat_threshold = STRENUOUS_HEAT_CAUTION_C if activity in STRENUOUS_ACTIVITIES else HEAT_CAUTION_C
+    if (weather_data.get("temperature") or 0) >= HEAT_CAUTION_C or (weather_data.get("apparent_temperature") or 0) >= heat_threshold:
+        precautions.append("Choose a cooler hour, bring water and take breaks in the shade.")
+    uv = weather_data.get("uv_index") or 0
+    if uv >= 8:
+        precautions.append("Choose a shaded or indoor option and avoid midday sun.")
+    elif uv >= 3:
         precautions.append("Use sun protection and plan a shaded route.")
-    if weather_data["weather_code"] >= 95:
+    if weather_data.get("weather_code") in THUNDERSTORM_CODES:
         precautions.append("Seek shelter in a substantial building or enclosed vehicle during thunder.")
-    elif weather_data["precipitation"] > 0:
+    elif (weather_data.get("precipitation") or 0) > 0 or weather_data.get("weather_code") in WET_WEATHER_CODES:
         precautions.append("Watch for slippery surfaces and reduced visibility.")
-    if weather_data["aqi"] > 50:
-        precautions.append("Check air-quality guidance before prolonged or strenuous activity.")
+    aqi = weather_data.get("aqi") or 0
+    if aqi > 150:
+        precautions.append("Reschedule prolonged or strenuous outdoor activity until air quality improves.")
+    elif aqi > 50:
+        precautions.append("If you are sensitive to air pollution, check air-quality guidance before strenuous activity.")
     return {
         "advice": ADVICE[activity][LEVELS.index(risk_level)],
         "precautions": precautions,
@@ -55,7 +63,7 @@ async def activity_recommendations(request: Request, selection: PredictionReques
     candidates.sort(key=lambda row: (abs(int(row["datetime"][11:13]) - selection.hour), row["datetime"]))
     alternatives = [
         {"datetime": row["datetime"], "hour": int(row["datetime"][11:13]), "risk_level": row["risk_level"],
-         "note": f'{row["temperature"]:.0f} °C · US AQI {row["aqi"]:.0f}'}
+         "note": f'Feels like {row["apparent_temperature"]:.0f} °C · US AQI {row["aqi"]:.0f}'}
         for row in candidates[:3]
     ]
     return {

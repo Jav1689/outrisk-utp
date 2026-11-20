@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { ChartNoAxesCombined, ChevronDown, RefreshCw } from 'lucide-react'
 import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { dateLabel, RISK_COLORS, reading, timeLabel } from '../weather'
+import { ACTIVITIES, dateLabel, RISK_COLORS, reading, timeLabel } from '../weather'
 
 const dayLabel = date => dateLabel(date, { weekday: 'short', day: 'numeric', month: 'short' })
 const entryRisk = row => row.risk_level || 'Unavailable'
@@ -13,6 +13,8 @@ function ForecastTooltip({ active, payload }) {
     <div className="chart-tooltip">
       <strong>{dayLabel(row.datetime)} · {timeLabel(Number(row.datetime.slice(11, 13)))}</strong>
       <p>{reading(row.temperature, '°C', 1)} · {entryRisk(row)}</p>
+      {row.apparent_temperature != null && <p>Feels like {reading(row.apparent_temperature, '°C', 1)}</p>}
+      {row.factors?.length > 0 && <p>{row.factors.join(' · ')}</p>}
     </div>
   )
 }
@@ -21,7 +23,7 @@ function RiskBar({ x, y, width, height, payload }) {
   return <rect x={x} y={y} width={width} height={height} rx={2} fill={RISK_COLORS[entryRisk(payload)]} />
 }
 
-export default function ForecastChart({ rows, location, loading, error, retry, onChoose, today }) {
+export default function ForecastChart({ rows, location, activity, loading, error, retry, onChoose, today }) {
   const hasMissingRisk = rows.some(row => !row.risk_level)
   const { points, ticks, days } = useMemo(() => {
     const days = {}
@@ -36,7 +38,7 @@ export default function ForecastChart({ rows, location, loading, error, retry, o
       <div className="forecast-heading">
         <div className="panel-heading">
           <span className="section-icon"><ChartNoAxesCombined size={20} /></span>
-          <div><h2 id="forecast-title">7-day risk forecast</h2><p>Hourly outlook for {location} · Malaysia time</p></div>
+          <div><h2 id="forecast-title">7-day risk forecast</h2><p>{ACTIVITIES[activity]} · {location} · Malaysia time</p></div>
         </div>
         <div className="legend" aria-label="Chart legend">
           {Object.entries(RISK_COLORS).slice(0, hasMissingRisk ? 4 : 3).map(([level, color]) => (
@@ -62,7 +64,7 @@ export default function ForecastChart({ rows, location, loading, error, retry, o
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          {hasMissingRisk && <p className="forecast-note">Risk is unavailable where weather or air-quality readings are missing.</p>}
+          {hasMissingRisk && <p className="forecast-note">Unavailable hours have missing weather or air-quality readings.</p>}
           <div className="forecast-days">
             {Object.entries(days).map(([date, hours]) => {
               const temps = hours.flatMap(row => row.temperature == null ? [] : [row.temperature])
@@ -83,6 +85,7 @@ export default function ForecastChart({ rows, location, loading, error, retry, o
                         <button type="button" key={row.datetime} className="forecast-hour" disabled={!row.risk_level} onClick={() => onChoose(date, hour)}>
                           <strong>{timeLabel(hour)}</strong><span>{reading(row.temperature, '°C')}</span>
                           <span className="hour-risk" style={{ color: RISK_COLORS[entryRisk(row)] }}>{entryRisk(row)}</span>
+                          {row.factors?.length > 0 && <span className="hour-factor" title={row.factors.join(' · ')}>{row.factors[0]}</span>}
                         </button>
                       )
                     })}

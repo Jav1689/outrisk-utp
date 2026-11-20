@@ -21,7 +21,7 @@ class ProjectTests(unittest.TestCase):
         cls.client_context.__exit__(None, None, None)
 
     def test_sample_forecast_matches_assessment_and_precautions(self):
-        response = self.client.get("/api/predict/forecast/UTP?source=sample")
+        response = self.client.get("/api/predict/forecast/UTP?source=sample&activity=jogging")
         self.assertEqual(response.status_code, 200)
         forecast = response.json()
         self.assertEqual(len(forecast), 168)
@@ -47,7 +47,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         times = response.json()["alternative_times"]
         self.assertTrue(times)
-        forecast = self.client.get("/api/predict/forecast/UTP?source=sample").json()
+        forecast = self.client.get("/api/predict/forecast/UTP?source=sample&activity=cycling").json()
         risks = {row["datetime"]: row["risk_level"] for row in forecast}
         for option in times:
             self.assertEqual(option["datetime"][:10], tomorrow)
@@ -61,12 +61,51 @@ class ProjectTests(unittest.TestCase):
                 response = self.client.post("/api/predict/risk", json={**params, **invalid})
                 self.assertEqual(response.status_code, 422)
 
-    def test_missing_aqi_is_unavailable_and_severe_weather_cannot_be_downgraded(self):
-        row = {"temperature": 25, "humidity": 65, "precipitation": 0, "weather_code": 95, "uv_index": 1}
+    def test_missing_aqi_cannot_hide_a_forecast_thunderstorm(self):
+        row = {"temperature": 25, "apparent_temperature": 28, "precipitation": 0, "weather_code": 3, "uv_index": 1}
         missing = predict_risk(app.state.model, {**row, "aqi": None})
-        complete = predict_risk(app.state.model, {**row, "aqi": 35})
+        storm = predict_risk(app.state.model, {**row, "weather_code": 95, "aqi": None})
         self.assertIsNone(missing["risk_level"])
-        self.assertEqual(complete["risk_level"], "Hazardous")
+        self.assertEqual(storm["risk_level"], "Hazardous")
+        self.assertIn("Thunderstorm", storm["factors"])
+        self.assertIsNone(storm["confidence"])
+
+    def test_tropical_morning_is_low_risk_but_showers_and_severe_weather_still_count(self):
+        row = {
+            "temperature": 24, "apparent_temperature": 28, "humidity": 100,
+            "precipitation": 0, "weather_code": 3, "uv_index": 0, "aqi": 54,
+        }
+        cases = [
+            ({}, "Safe"),
+            ({"precipitation": 0.2, "weather_code": 80}, "Caution"),
+            ({"weather_code": 82}, "Hazardous"),
+            ({"precipitation": 10}, "Hazardous"),
+            ({"apparent_temperature": 40}, "Hazardous"),
+            ({"uv_index": 11}, "Hazardous"),
+            ({"aqi": 110}, "Caution"),
+            ({"aqi": 151}, "Hazardous"),
+        ]
+        for updates, label in cases:
+            with self.subTest(updates=updates):
+                result = predict_risk(app.state.model, {**row, **updates}, "sports")
+                self.assertEqual(result["risk_level"], label)
+
+    def test_forecast_and_assessment_apply_selected_activity_to_heat(self):
+        forecast_url = "/api/predict/forecast/UTP"
+        walk = self.client.get(forecast_url, params={"source": "sample", "activity": "walking"}).json()
+        sport = self.client.get(forecast_url, params={"source": "sample", "activity": "sports"}).json()
+        difference = next(
+            (easy, strenuous) for easy, strenuous in zip(walk, sport)
+            if easy["risk_level"] == "Safe" and strenuous["risk_level"] == "Caution"
+        )
+        date, time = difference[0]["datetime"].split("T")
+        for activity, forecast_row in zip(("walking", "sports"), difference):
+            response = self.client.post("/api/predict/risk", json={
+                "location": "UTP", "source": "sample", "activity": activity,
+                "date": date, "hour": int(time[:2]),
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["risk_level"], forecast_row["risk_level"])
 
     def test_air_quality_is_joined_by_timestamp(self):
         hours = ["2026-01-01T00:00", "2026-01-01T01:00", "2026-01-01T02:00"]

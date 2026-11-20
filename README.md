@@ -41,16 +41,24 @@ Use `UTP` or `Seri Iskandar` as the location. Weather routes use ISO timestamps 
 | GET | `/api/weather/forecast/{location}` | 168 hourly weather rows |
 | GET | `/api/weather/historical/{location}` | 100 complete calendar days ending yesterday |
 | POST | `/api/predict/risk` | Risk class, confidence, probabilities and contributing factors |
-| GET | `/api/predict/forecast/{location}` | 168 hourly weather and risk rows |
+| GET | `/api/predict/forecast/{location}` | 168 hourly weather and risk rows, optionally rated for the chosen activity using `?activity=sports` |
 | POST | `/api/recommend/activity` | Activity advice, precautions and available alternatives |
 
 Current and forecast endpoints accept `?source=sample`. The two POST endpoints accept `"source": "sample"` in the body. The historical route uses the live archive.
 
 ## How risk is estimated
 
-The Random Forest learns from synthetic weather labeled with the thresholds in [issue #1](https://github.com/Jav1689/outrisk-utp/issues/1). Training reports performance on a held-out synthetic split. That score measures how closely the model follows the project’s rules. Forecasts also apply those thresholds as a minimum risk level, so the model cannot downgrade a hazard flagged by the rules. The displayed confidence is the model’s probability for the reported class.
+The hourly forecast, activity assessment and alternative times use the same rules. They use Open-Meteo’s feels-like temperature, which combines humidity, wind and solar radiation with air temperature. Humidity is displayed for context.
 
-The weather forecast spans seven days. The air-quality feed may have a shorter horizon. When a model input is missing, risk stays unavailable and the dashboard keeps displaying the available weather. Use the dashboard for planning and check [official MET Malaysia alerts](https://www.met.gov.my/) before heading out.
+- **Caution** starts at 35°C feels-like for walking, commuting and the general outlook, and at 32°C for jogging, cycling and outdoor sports. Air temperature from 35°C, ordinary rain or drizzle, fog, UV from 6, or U.S. AQI above 100 also merit caution.
+- **Hazardous** applies to forecast thunderstorms, heavy precipitation codes or 10 mm/hour of precipitation, 40°C feels-like or 37°C air temperature, UV of 11 or above, or U.S. AQI above 150.
+- **Low-risk hours** have enough readings to assess and meet none of the above conditions.
+
+These thresholds are for hourly planning. MET Malaysia issues official warnings using separate criteria, including multiple days of maximum air temperature for heat waves. OutRisk displays Open-Meteo’s U.S. AQI. Check Malaysia’s Department of Environment for its local IPU readings. [MET Malaysia warnings](https://www.met.gov.my/en/ramalan/ribut-petir/) · [MET Malaysia heat-wave criteria](https://www.met.gov.my/en/pendidikan/fenomena-cuaca/) · [KKM hot-weather guidance](https://infosihat.moh.gov.my/cuaca-panas.html) · [WHO UV guidance](https://www.who.int/news-room/questions-and-answers/item/radiation-the-ultraviolet-%28uv%29-index) · [U.S. AQI guidance](https://www.airnow.gov/aqi/aqi-basics/) · [Malaysia IPU readings](https://eqms.doe.gov.my/APIMS/main/)
+
+The Random Forest learns the rules from synthetic examples. Its score shows how closely it agrees with the rule label. Run `python -m model.train` again from `server/` to update the model after pulling the revised rules. The API can apply the rules while model scores are unavailable.
+
+The weather forecast spans seven days. The air-quality feed may have a shorter horizon. A known severe hazard still shows when other readings are missing. Hours with incomplete readings and no known severe hazard remain unavailable.
 
 Weather and air quality are provided by [Open-Meteo](https://open-meteo.com/). Air-quality forecasts use [Copernicus Atmosphere Monitoring Service](https://atmosphere.copernicus.eu/) data.
 

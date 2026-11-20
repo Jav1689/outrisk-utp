@@ -8,8 +8,8 @@ export const getCurrentWeather = (location, source, signal) =>
 export const getForecast = (location, source, signal) =>
   api.get(`/weather/forecast/${encodeURIComponent(location)}`, { params: { source }, signal }).then(response => response.data)
 
-export const getForecastRisk = (location, source, signal) =>
-  api.get(`/predict/forecast/${encodeURIComponent(location)}`, { params: { source }, signal }).then(response => response.data)
+export const getForecastRisk = (location, source, activity, signal) =>
+  api.get(`/predict/forecast/${encodeURIComponent(location)}`, { params: { source, activity }, signal }).then(response => response.data)
 
 export const predictRisk = (selection, signal) =>
   api.post('/predict/risk', selection, { signal }).then(response => response.data)
