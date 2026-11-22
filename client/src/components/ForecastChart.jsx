@@ -136,7 +136,15 @@ export default function ForecastChart({ rows, location, activity, loading, error
                               title={isPast ? 'Time has passed' : ''}
                             >
                               <strong>{timeLabel(hour)}</strong><span>{reading(row.temperature, '°C')}</span>
-                              <span className="hour-risk" style={{ color: isPast ? '#8a9991' : RISK_COLORS[entryRisk(row)] }}>
+                              <span className="hour-risk" style={{
+                                color: isPast ? '#8a9991' : RISK_COLORS[entryRisk(row)],
+                                backgroundColor: entryRisk(row) == "Safe" & !isPast ? "#23805d" : "transparent",
+                                height: "20px",
+                                width: "36px",
+                                textAlign: "center",
+                                margin: 0,
+                                borderRadius: "8px",
+                              }}>
                                 {isPast ? 'Passed' : entryRisk(row)}
                               </span>
                               {row.factors?.length > 0 && <span className="hour-factor" title={row.factors.join(' · ')}>{row.factors[0]}</span>}
