@@ -17,20 +17,44 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 TIMEZONE = ZoneInfo("Asia/Kuala_Lumpur")
 LOCATIONS = {"UTP": (4.3856, 100.9779), "Seri Iskandar": (4.3621, 100.9407)}
 FORECAST_DAYS = 7
-FORECAST_URL = os.getenv("OPEN_METEO_BASE_URL", "https://api.open-meteo.com/v1").rstrip("/")
-AIR_URL = os.getenv("OPEN_METEO_AIR_QUALITY_URL", "https://air-quality-api.open-meteo.com/v1").rstrip("/")
-ARCHIVE_URL = os.getenv("OPEN_METEO_ARCHIVE_URL", "https://archive-api.open-meteo.com/v1").rstrip("/")
+
+
+def _clean_env_url(key: str, default: str) -> str:
+    raw = os.getenv(key, default)
+    return raw.strip().strip("\"'").rstrip("/")
+
+
+FORECAST_URL = _clean_env_url("OPEN_METEO_BASE_URL", "https://api.open-meteo.com/v1")
+AIR_URL = _clean_env_url("OPEN_METEO_AIR_QUALITY_URL", "https://air-quality-api.open-meteo.com/v1")
+ARCHIVE_URL = _clean_env_url("OPEN_METEO_ARCHIVE_URL", "https://archive-api.open-meteo.com/v1")
 HISTORY_FIELDS = ("temperature_2m_max", "temperature_2m_min", "precipitation_sum", "weather_code")
+REQUEST_HEADERS = {"User-Agent": "OutRisk-UTP/1.0"}
 
 
-async def _request(client, url, lat, lon, **variables):
+async def _request(client: httpx.AsyncClient, url: str, lat: float, lon: float, **variables):
     params = {"latitude": lat, "longitude": lon, "timezone": TIMEZONE.key, **variables}
-    try:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
-    except (httpx.HTTPError, ValueError) as exc:
-        raise HTTPException(502, "Open-Meteo data is temporarily unavailable. Please try again.") from exc
+    last_exc = None
+
+    for attempt in range(3):
+        try:
+            response = await client.get(url, params=params, headers=REQUEST_HEADERS, timeout=15.0)
+            if response.status_code == 429:
+                wait_seconds = float(response.headers.get("Retry-After", 1.5 * (attempt + 1)))
+                print(f"[Open-Meteo 429] Rate limited on {url}; retrying in {wait_seconds}s...")
+                await asyncio.sleep(wait_seconds)
+                continue
+            response.raise_for_status()
+            return response.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            last_exc = exc
+            body_preview = ""
+            if isinstance(exc, httpx.HTTPStatusError):
+                body_preview = f" | body={exc.response.text[:200]}"
+            print(f"[Open-Meteo Error] attempt={attempt + 1} url={url} error={repr(exc)}{body_preview}")
+            if attempt < 2:
+                await asyncio.sleep(1.0 * (attempt + 1))
+
+    raise HTTPException(502, "Open-Meteo data is temporarily unavailable. Please try again.") from last_exc
 
 
 async def fetch_current_and_forecast(client, lat, lon):
@@ -43,14 +67,18 @@ async def fetch_current_and_forecast(client, lat, lon):
 
 async def fetch_air_quality(client, lat, lon):
     fields = ",".join(AIR_FIELDS)
-    return await _request(client, f"{AIR_URL}/air-quality", lat, lon,
-                          current=fields, hourly=fields, forecast_days=FORECAST_DAYS)
+    return await _request(
+        client, f"{AIR_URL}/air-quality", lat, lon,
+        current=fields, hourly=fields, forecast_days=FORECAST_DAYS,
+    )
 
 
 async def fetch_historical(client, lat, lon, start_date, end_date):
-    return await _request(client, f"{ARCHIVE_URL}/archive", lat, lon,
-                          start_date=start_date.isoformat(), end_date=end_date.isoformat(),
-                          daily=",".join(HISTORY_FIELDS), models="ecmwf_ifs")
+    return await _request(
+        client, f"{ARCHIVE_URL}/archive", lat, lon,
+        start_date=start_date.isoformat(), end_date=end_date.isoformat(),
+        daily=",".join(HISTORY_FIELDS), models="ecmwf_ifs",
+    )
 
 
 def _current_conditions(weather, air):
@@ -78,9 +106,15 @@ class WeatherService:
             expires, data_day, payload = self.cache.get(key, (0, None, None))
             if monotonic() < expires and day == data_day:
                 return payload
-            payload = await fetch(*LOCATIONS[location])
-            self.cache[key] = (monotonic() + seconds, day, payload)
-            return payload
+            try:
+                payload = await fetch(*LOCATIONS[location])
+                self.cache[key] = (monotonic() + seconds, day, payload)
+                return payload
+            except HTTPException:
+                if payload is not None:
+                    print(f"[Open-Meteo Cache] Refresh failed for {key}; serving stale cached data.")
+                    return payload
+                raise
 
     async def fetch_all_data(self, location, source):
         now = datetime.now(TIMEZONE)
@@ -89,9 +123,11 @@ class WeatherService:
             return sample_weather(location, now)
 
         async def fetch(lat, lon):
-            weather, air = await asyncio.gather(
-                fetch_current_and_forecast(self.client, lat, lon), fetch_air_quality(self.client, lat, lon)
-            )
+            # Fetch sequentially to stay within Open-Meteo's 1-concurrent-request-per-IP limit
+            weather = await fetch_current_and_forecast(self.client, lat, lon)
+            await asyncio.sleep(0.25)
+            air = await fetch_air_quality(self.client, lat, lon)
+
             try:
                 current = _current_conditions(weather, air)
                 hours = json_records(clean_dataframe(parse_hourly_to_dataframe(weather, air)))
@@ -102,7 +138,7 @@ class WeatherService:
                 raise HTTPException(502, "Open-Meteo returned an incomplete forecast. Please try again.") from exc
             return {"location": location, "timezone": TIMEZONE.key, "source": "live", "current": current, "hourly": hours}
 
-        return await self._cached(location, "live", fetch, 300, now.date())
+        return await self._cached(location, "live", fetch, 900, now.date())
 
     async def historical(self, location):
         today = datetime.now(TIMEZONE).date()
