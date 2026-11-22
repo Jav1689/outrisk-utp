@@ -137,7 +137,7 @@ export default function ForecastChart({ rows, location, activity, loading, error
                             >
                               <strong>{timeLabel(hour)}</strong><span>{reading(row.temperature, '°C')}</span>
                               <span className="hour-risk" style={{
-                                color: isPast ? '#8a9991' : RISK_COLORS[entryRisk(row)],
+                                color: isPast ? '#8a9991' : entryRisk(row) == "Safe" ? "#fff" : RISK_COLORS[entryRisk(row)],
                                 backgroundColor: entryRisk(row) == "Safe" & !isPast ? "#23805d" : "transparent",
                                 height: "20px",
                                 width: "36px",
