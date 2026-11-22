@@ -157,8 +157,8 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
 }
 
 @media (pointer: fine) {
-  *, *::before, *::after {
-    cursor: none !important;
+  html, body, button, a, input, select, label, summary {
+    cursor: none;
   }
 }
 
@@ -172,6 +172,7 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
   border-radius: 50%;
   background: #1c6146;
   pointer-events: none;
+  will-change: transform;
   box-shadow:
     inset 1px 1px 2px rgba(255, 255, 255, 0.4),
     inset -1px -1px 2px rgba(0, 0, 0, 0.2),
@@ -189,6 +190,7 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
   border-radius: 50%;
   border: 2px solid rgba(24, 91, 66, 0.3);
   pointer-events: none;
+  will-change: transform;
   background: rgba(233, 244, 236, 0.15);
   box-shadow:
     inset 1px 1px 3px rgba(255, 255, 255, 0.3),
@@ -327,6 +329,7 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
   left: 0;
   border-radius: 9999px;
   background: #185b42;
+  will-change: transform, width;
   box-shadow:
     inset 1px 1px 2px rgba(255, 255, 255, 0.25),
     inset -1px -1px 2px rgba(0, 0, 0, 0.2),
@@ -448,6 +451,7 @@ main { padding-block: 20px 0; }
   border-radius: 12px;
   background: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.8);
+  will-change: transform, width;
   box-shadow:
     inset 1px 1px 3px var(--clay-highlight),
     inset -1px -1px 2px var(--clay-shadow-inner),
@@ -546,25 +550,19 @@ main { padding-block: 20px 0; }
 }
 .panel {
   min-width: 0;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 24px;
   padding: 24px;
   box-shadow:
-    inset 2px 2px 5px var(--clay-highlight),
-    inset -2px -2px 5px var(--clay-shadow-inner),
-    8px 10px 24px var(--clay-shadow-outer),
-    -3px -3px 12px var(--clay-glow);
+    inset 1px 1px 3px var(--clay-highlight),
+    0 8px 24px var(--clay-shadow-outer);
 }
 .panel:hover {
   transform: translateY(-2px);
   box-shadow:
-    inset 2px 2px 6px var(--clay-highlight),
-    inset -2px -2px 6px var(--clay-shadow-inner),
-    10px 14px 30px var(--clay-shadow-outer),
-    -4px -4px 14px var(--clay-glow);
+    inset 1px 1px 4px var(--clay-highlight),
+    0 12px 28px var(--clay-shadow-outer);
 }
 .panel-heading { display: flex; gap: .72rem; align-items: flex-start; }
 .section-icon {

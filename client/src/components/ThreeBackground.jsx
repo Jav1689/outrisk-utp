@@ -33,9 +33,9 @@ export default function ThreeBackground() {
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100)
     camera.position.z = 20
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false, powerPreference: 'high-performance' })
     renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
     container.appendChild(renderer.domElement)
 
     // Natural lighting for fresh outdoor ambiance
@@ -44,12 +44,10 @@ export default function ThreeBackground() {
     sunLight.position.set(6, 12, 8)
     scene.add(sunLight)
 
-    // Soft clay material for organic botanical leaves
+    // Lightweight Lambert material for organic botanical leaves (eliminates expensive PBR lighting)
     const leafMaterial = (color) =>
-      new THREE.MeshStandardMaterial({
+      new THREE.MeshLambertMaterial({
         color,
-        roughness: 0.8,
-        metalness: 0.05,
         side: THREE.DoubleSide,
       })
 
@@ -87,11 +85,16 @@ export default function ThreeBackground() {
       leaves.push(mesh)
     }
 
-    // Animation loop: natural falling and fluttering leaves
+    // Animation loop: natural falling and fluttering leaves with visibility check
     let animationId
     const clock = new THREE.Clock()
 
     function animate() {
+      if (document.hidden) {
+        animationId = requestAnimationFrame(animate)
+        return
+      }
+
       animationId = requestAnimationFrame(animate)
       const elapsed = clock.getElapsedTime()
 
