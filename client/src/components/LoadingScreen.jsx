@@ -18,7 +18,7 @@ export default function LoadingScreen({ onFinished }) {
     <div className={`loading-screen ${fading ? 'fade-out' : ''}`}>
       <div className="loading-badge">
         <div className="loading-icon-wrap">
-          <Leaf className="loading-leaf" size={36} />
+          <img src="/outrisk-icon.svg" alt="OutRisk UTP logo" className="loading-logo" width="48" height="48" />
         </div>
         <div className="loading-text">
           <strong>OutRisk UTP</strong>

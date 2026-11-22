@@ -136,7 +136,10 @@ export default function Dashboard() {
       <a className="skip-link" href="#overview">Skip to dashboard</a>
       <header className="site-header">
         <div className="header-inner">
-          <a className="brand" href="#overview" onClick={() => setActiveSection('overview')}><span className="brand-icon"><Compass size={24} strokeWidth={1.8} /></span>OutRisk <span>UTP</span></a>
+          <a className="brand" href="#overview" onClick={() => setActiveSection('overview')}>
+            <img src="/outrisk-icon.svg" alt="OutRisk UTP logo" className="brand-logo" width="34" height="34" />
+            OutRisk <span>UTP</span>
+          </a>
           <nav className="nav-capsule-bar" aria-label="Main navigation">
             <span
               className="nav-slider"
