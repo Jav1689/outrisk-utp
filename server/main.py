@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from mimetypes import add_type
 from pathlib import Path
+import os
 
 import httpx
 from fastapi import FastAPI
@@ -21,11 +22,14 @@ async def lifespan(app):
 
 
 app = FastAPI(title="OutRisk UTP API", version="1.0.0", lifespan=lifespan)
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 app.include_router(weather.router, prefix="/api/weather", tags=["Weather"])
 app.include_router(predict.router, prefix="/api/predict", tags=["Prediction"])
