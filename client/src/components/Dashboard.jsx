@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [checking, setChecking] = useState(false)
   const activeCheck = useRef(null)
   const resultAnchor = useRef(null)
+  const locationBtnRefs = useRef({})
+  const [sliderStyle, setSliderStyle] = useState({ left: 4, width: 0, opacity: 0 })
   const { date: today } = malaysiaNow()
   const { location, activity } = selection
   const requestKey = `${location}/${source}/${requestNumber}`
@@ -55,6 +57,17 @@ export default function Dashboard() {
   useEffect(() => {
     if (assessment) resultAnchor.current?.focus({ preventScroll: true })
   }, [assessment])
+
+  useEffect(() => {
+    const activeEl = locationBtnRefs.current[location]
+    if (activeEl) {
+      setSliderStyle({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      })
+    }
+  }, [location])
 
   const current = currentReading?.key === requestKey ? currentReading : emptyReading
   const forecast = forecastReading?.key === forecastKey ? forecastReading : emptyReading
@@ -131,10 +144,19 @@ export default function Dashboard() {
           <div className="location-control">
             <span className="location-label"><MapPin size={17} /> Location</span>
             <div className="segmented-container" role="group" aria-label="Forecast location">
-              <span className={`segmented-slider ${location === 'Seri Iskandar' ? 'right' : 'left'}`} aria-hidden="true" />
+              <span
+                className="segmented-slider"
+                style={{
+                  transform: `translateX(${sliderStyle.left}px)`,
+                  width: `${sliderStyle.width}px`,
+                  opacity: sliderStyle.opacity,
+                }}
+                aria-hidden="true"
+              />
               {Object.keys(LOCATIONS).map(value => (
                 <button
                   key={value}
+                  ref={el => { locationBtnRefs.current[value] = el }}
                   type="button"
                   className={`segmented-btn ${value === location ? 'active' : ''}`}
                   aria-pressed={value === location}
