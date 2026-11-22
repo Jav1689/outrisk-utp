@@ -157,8 +157,8 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
 }
 
 @media (pointer: fine) {
-  *, *::before, *::after {
-    cursor: none !important;
+  html, body, button, a, input, select, label, summary {
+    cursor: none;
   }
 }
 
@@ -166,12 +166,13 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 9999;
+  z-index: 2147483647;
   width: 12px;
   height: 12px;
   border-radius: 50%;
   background: #1c6146;
   pointer-events: none;
+  will-change: transform;
   box-shadow:
     inset 1px 1px 2px rgba(255, 255, 255, 0.4),
     inset -1px -1px 2px rgba(0, 0, 0, 0.2),
@@ -183,12 +184,13 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 9998;
+  z-index: 2147483646;
   width: 36px;
   height: 36px;
   border-radius: 50%;
   border: 2px solid rgba(24, 91, 66, 0.3);
   pointer-events: none;
+  will-change: transform;
   background: rgba(233, 244, 236, 0.15);
   box-shadow:
     inset 1px 1px 3px rgba(255, 255, 255, 0.3),
@@ -305,28 +307,63 @@ button, a, select, input, .panel, .segmented button, .forecast-hour, .metric-gri
 .site-header nav {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
 }
 
-.site-header nav a {
+/* Liquid glass navbar container with sliding capsule */
+.nav-capsule-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 4px;
+  border-radius: 9999px;
+  background: rgba(233, 244, 236, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 1px 1px 3px rgba(22, 57, 43, 0.05);
+}
+
+.nav-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 9999px;
+  background: #185b42;
+  will-change: transform, width;
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, 0.25),
+    inset -1px -1px 2px rgba(0, 0, 0, 0.2),
+    0 3px 10px rgba(24, 91, 66, 0.35);
+  transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1), width 0.32s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.nav-capsule-bar a {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem 0.95rem;
   border-radius: 9999px;
   font-size: 0.88rem;
   font-weight: 650;
   color: var(--muted);
   border: none;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition: color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.site-header nav a:hover,
-.site-header nav a:first-child {
+.nav-capsule-bar a:hover:not(.active) {
   color: var(--green);
-  background: rgba(233, 244, 236, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px);
   box-shadow:
-    inset 1px 1px 2px var(--clay-highlight),
-    inset -1px -1px 2px var(--clay-shadow-inner);
+    inset 1px 1px 2px rgba(255, 255, 255, 0.8),
+    0 2px 8px rgba(22, 57, 43, 0.06);
+}
+
+.nav-capsule-bar a.active {
+  color: #ffffff;
 }
 
 .timezone {
@@ -394,6 +431,53 @@ main { padding-block: 20px 0; }
 }
 .location-control { gap: .85rem; }
 .location-label { display: inline-flex; align-items: center; gap: .38rem; color: #355a49; font-size: .9rem; font-weight: 650; }
+.segmented-container {
+  position: relative;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 16px;
+  background: #eaf0ea;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 2px 2px 5px rgba(22, 57, 43, 0.06),
+    inset -2px -2px 4px var(--clay-highlight);
+}
+
+.segmented-slider {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  will-change: transform, width;
+  box-shadow:
+    inset 1px 1px 3px var(--clay-highlight),
+    inset -1px -1px 2px var(--clay-shadow-inner),
+    2px 4px 10px rgba(22, 57, 43, 0.1);
+  transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1), width 0.32s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.segmented-btn {
+  position: relative;
+  z-index: 1;
+  min-height: 34px;
+  padding: 0.36rem 0.95rem;
+  border: none;
+  background: transparent;
+  color: #476257;
+  font-size: 0.88rem;
+  font-weight: 650;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.segmented-btn.active {
+  color: #16573e;
+}
+
 .segmented {
   display: flex;
   gap: .25rem;
@@ -466,25 +550,19 @@ main { padding-block: 20px 0; }
 }
 .panel {
   min-width: 0;
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 24px;
   padding: 24px;
   box-shadow:
-    inset 2px 2px 5px var(--clay-highlight),
-    inset -2px -2px 5px var(--clay-shadow-inner),
-    8px 10px 24px var(--clay-shadow-outer),
-    -3px -3px 12px var(--clay-glow);
+    inset 1px 1px 3px var(--clay-highlight),
+    0 8px 24px var(--clay-shadow-outer);
 }
 .panel:hover {
   transform: translateY(-2px);
   box-shadow:
-    inset 2px 2px 6px var(--clay-highlight),
-    inset -2px -2px 6px var(--clay-shadow-inner),
-    10px 14px 30px var(--clay-shadow-outer),
-    -4px -4px 14px var(--clay-glow);
+    inset 1px 1px 4px var(--clay-highlight),
+    0 12px 28px var(--clay-shadow-outer);
 }
 .panel-heading { display: flex; gap: .72rem; align-items: flex-start; }
 .section-icon {
@@ -633,8 +711,34 @@ main { padding-block: 20px 0; }
    180-Degree 3D Flip Animation on Risk Check
    ========================================================================== */
 
-.assessment {
+/* ==========================================================================
+   Smooth Assessment Height Expansion & Card Entrance
+   ========================================================================== */
+
+.assessment-collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  transition:
+    grid-template-rows 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s ease,
+    margin-top 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.assessment-collapsible.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
   margin-top: 19px;
+}
+
+.assessment-collapsible-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.assessment {
+  margin-top: 0;
   perspective: 1400px;
 }
 .assessment:focus { outline: none; }
@@ -642,12 +746,12 @@ main { padding-block: 20px 0; }
 .assessment > .panel {
   transform-style: preserve-3d;
   backface-visibility: hidden;
-  animation: clayFlipIn 0.95s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+  animation: clayFlipIn 0.85s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
-/* Stagger the second card (Recommendations) for a layered card-flip reveal */
+/* Stagger the second card (Recommendations) for a layered reveal */
 .assessment > .panel:nth-child(2) {
-  animation-delay: 0.14s;
+  animation-delay: 0.12s;
 }
 
 @keyframes clayFlipIn {
@@ -766,6 +870,84 @@ main { padding-block: 20px 0; }
 .chart-tooltip p { margin: .15rem 0 0; color: var(--muted); }
 .forecast-note { color: var(--muted); font-size: .85rem; margin: .25rem 0 .8rem; }
 .forecast-days { display: grid; gap: .45rem; }
+
+/* ==========================================================================
+   Smooth Forecast Accordion
+   ========================================================================== */
+
+.forecast-day-accordion {
+  background: rgba(248, 250, 248, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 16px;
+  margin-bottom: 0.45rem;
+  overflow: hidden;
+  box-shadow:
+    inset 1px 1px 3px var(--clay-highlight),
+    inset -1px -1px 2px var(--clay-shadow-inner),
+    2px 3px 8px rgba(22, 57, 43, 0.04);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.forecast-day-accordion.open {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    inset 2px 2px 4px var(--clay-highlight),
+    inset -2px -2px 3px var(--clay-shadow-inner),
+    4px 6px 16px rgba(22, 57, 43, 0.07);
+}
+
+.forecast-day-header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.15fr 0.75fr 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.forecast-day-header:hover {
+  background: rgba(233, 244, 236, 0.5);
+}
+
+.forecast-day-header span:first-child {
+  color: var(--ink);
+  font-weight: 680;
+}
+
+.accordion-chevron {
+  transition: transform 0.32s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.forecast-day-accordion.open .accordion-chevron {
+  transform: rotate(180deg);
+}
+
+/* Fluid height expansion */
+.forecast-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forecast-day-accordion.open .forecast-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+.forecast-accordion-content {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Legacy details support fallback */
 .forecast-days details {
   background: rgba(248, 250, 248, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.6);
@@ -831,6 +1013,179 @@ main { padding-block: 20px 0; }
 }
 .hour-risk { font-weight: 670; }
 .hour-factor { color: var(--muted); line-height: 1.25; overflow-wrap: anywhere; }
+
+.forecast-hour.forecast-hour-past,
+.forecast-hour:disabled {
+  background: rgba(230, 235, 232, 0.55);
+  border-color: rgba(210, 220, 214, 0.6);
+  color: #8a9991;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.65;
+}
+
+.forecast-hour.forecast-hour-past strong,
+.forecast-hour:disabled strong {
+  color: #718279;
+}
+
+.forecast-hour.forecast-hour-past:hover,
+.forecast-hour:disabled:hover {
+  transform: none;
+  background: rgba(230, 235, 232, 0.55);
+  border-color: rgba(210, 220, 214, 0.6);
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   Hourly Detail Modal (Blurry Backdrop, Zoom In/Out)
+   ========================================================================== */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(14, 34, 25, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: modalFadeIn 0.24s ease-out forwards;
+}
+
+.modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  padding: 1.6rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 2px 2px 5px var(--clay-highlight),
+    inset -2px -2px 4px var(--clay-shadow-inner),
+    0 20px 45px rgba(14, 34, 25, 0.28);
+  transform-origin: center center;
+  animation: modalZoomIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.90) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: #f0f5f2;
+  color: var(--muted);
+  box-shadow:
+    inset 1px 1px 2px var(--clay-highlight),
+    inset -1px -1px 2px var(--clay-shadow-inner);
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: #e2ede5;
+  color: var(--ink);
+  transform: scale(1.06);
+}
+
+.modal-header {
+  padding-right: 2.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.modal-header h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  color: var(--ink);
+  font-weight: 730;
+}
+
+.modal-risk-pill {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.modal-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.modal-metrics-grid > div {
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  background: #f4f8f5;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+.modal-metrics-grid span {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.modal-metrics-grid strong {
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.modal-factors {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  background: #fff8ee;
+  border: 1px solid rgba(240, 220, 190, 0.5);
+}
+
+.modal-factors span {
+  font-weight: 700;
+  color: #79521e;
+  margin-right: 0.35rem;
+}
+
+.modal-factors p {
+  margin: 0.2rem 0 0;
+  color: #8c6027;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-select-btn {
+  width: 100%;
+}
 
 footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-block: 1.5rem 1.8rem; font-size: .85rem; color: var(--muted); }
 footer strong { color: var(--ink); }

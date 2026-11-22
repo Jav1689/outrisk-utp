@@ -11,6 +11,7 @@ const ForecastChart = lazy(() => import('./ForecastChart'))
 const emptyReading = { data: null, error: '' }
 
 export default function Dashboard() {
+  const [activeSection, setActiveSection] = useState('overview')
   const [selection, setSelection] = useState(() => ({ location: 'UTP', activity: 'jogging', ...malaysiaNow() }))
   const [source, setSource] = useState('live')
   const [requestNumber, setRequestNumber] = useState(0)
@@ -21,6 +22,10 @@ export default function Dashboard() {
   const [checking, setChecking] = useState(false)
   const activeCheck = useRef(null)
   const resultAnchor = useRef(null)
+  const locationBtnRefs = useRef({})
+  const [sliderStyle, setSliderStyle] = useState({ left: 4, width: 0, opacity: 0 })
+  const navLinkRefs = useRef({})
+  const [navSliderStyle, setNavSliderStyle] = useState({ left: 4, width: 0, opacity: 0 })
   const { date: today } = malaysiaNow()
   const { location, activity } = selection
   const requestKey = `${location}/${source}/${requestNumber}`
@@ -54,6 +59,28 @@ export default function Dashboard() {
   useEffect(() => {
     if (assessment) resultAnchor.current?.focus({ preventScroll: true })
   }, [assessment])
+
+  useEffect(() => {
+    const activeEl = locationBtnRefs.current[location]
+    if (activeEl) {
+      setSliderStyle({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      })
+    }
+  }, [location])
+
+  useEffect(() => {
+    const activeEl = navLinkRefs.current[activeSection]
+    if (activeEl) {
+      setNavSliderStyle({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      })
+    }
+  }, [activeSection])
 
   const current = currentReading?.key === requestKey ? currentReading : emptyReading
   const forecast = forecastReading?.key === forecastKey ? forecastReading : emptyReading
@@ -109,8 +136,37 @@ export default function Dashboard() {
       <a className="skip-link" href="#overview">Skip to dashboard</a>
       <header className="site-header">
         <div className="header-inner">
-          <a className="brand" href="#overview"><span className="brand-icon"><Compass size={24} strokeWidth={1.8} /></span>OutRisk <span>UTP</span></a>
-          <nav aria-label="Main navigation"><a href="#overview">Overview</a><a href="#forecast">Forecast</a></nav>
+          <a className="brand" href="#overview" onClick={() => setActiveSection('overview')}>
+            <img src="/outrisk-icon.svg" alt="OutRisk UTP logo" className="brand-logo" width="34" height="34" />
+            OutRisk <span>UTP</span>
+          </a>
+          <nav className="nav-capsule-bar" aria-label="Main navigation">
+            <span
+              className="nav-slider"
+              style={{
+                transform: `translateX(${navSliderStyle.left}px)`,
+                width: `${navSliderStyle.width}px`,
+                opacity: navSliderStyle.opacity,
+              }}
+              aria-hidden="true"
+            />
+            <a
+              ref={el => { navLinkRefs.current['overview'] = el }}
+              href="#overview"
+              className={activeSection === 'overview' ? 'active' : ''}
+              onClick={() => setActiveSection('overview')}
+            >
+              Overview
+            </a>
+            <a
+              ref={el => { navLinkRefs.current['forecast'] = el }}
+              href="#forecast"
+              className={activeSection === 'forecast' ? 'active' : ''}
+              onClick={() => setActiveSection('forecast')}
+            >
+              Forecast
+            </a>
+          </nav>
           <div className="timezone"><Clock3 size={15} /><span>Malaysia time</span><span className="zone-offset">UTC+8</span></div>
         </div>
       </header>
@@ -125,9 +181,27 @@ export default function Dashboard() {
         <div className="location-bar">
           <div className="location-control">
             <span className="location-label"><MapPin size={17} /> Location</span>
-            <div className="segmented" role="group" aria-label="Forecast location">
+            <div className="segmented-container" role="group" aria-label="Forecast location">
+              <span
+                className="segmented-slider"
+                style={{
+                  transform: `translateX(${sliderStyle.left}px)`,
+                  width: `${sliderStyle.width}px`,
+                  opacity: sliderStyle.opacity,
+                }}
+                aria-hidden="true"
+              />
               {Object.keys(LOCATIONS).map(value => (
-                <button key={value} aria-pressed={value === location} onClick={() => change('location', value)}>{value}</button>
+                <button
+                  key={value}
+                  ref={el => { locationBtnRefs.current[value] = el }}
+                  type="button"
+                  className={`segmented-btn ${value === location ? 'active' : ''}`}
+                  aria-pressed={value === location}
+                  onClick={() => change('location', value)}
+                >
+                  {value}
+                </button>
               ))}
             </div>
           </div>
@@ -149,16 +223,20 @@ export default function Dashboard() {
           <ActivityForm selection={selection} onChange={change} onSubmit={event => { event.preventDefault(); check(selection) }}
             loading={checking} error={formError} minDate={today} maxDate={addDays(today, FORECAST_DAYS - 1)} />
         </div>
-        {assessment && (
-          <div className="dashboard-grid assessment" ref={resultAnchor} tabIndex={-1} aria-label="Activity risk and recommendations">
-            <RiskResult prediction={assessment.prediction} />
-            <Recommendations data={assessment.recommendations} onTryTime={hour => {
-              const next = { ...selection, hour }
-              setSelection(next)
-              check(next)
-            }} />
+        <div className={`assessment-collapsible ${assessment ? 'open' : ''}`}>
+          <div className="assessment-collapsible-inner">
+            {assessment && (
+              <div className="dashboard-grid assessment" ref={resultAnchor} tabIndex={-1} aria-label="Activity risk and recommendations">
+                <RiskResult prediction={assessment.prediction} />
+                <Recommendations data={assessment.recommendations} onTryTime={hour => {
+                  const next = { ...selection, hour }
+                  setSelection(next)
+                  check(next)
+                }} />
+              </div>
+            )}
           </div>
-        )}
+        </div>
         <Suspense fallback={<section className="panel forecast chart-loading" id="forecast" role="status">Loading forecast…</section>}>
           <ForecastChart key={requestKey} rows={forecast.data || []} location={location} activity={activity} loading={!forecast.data && !forecast.error}
             error={forecast.error} retry={retry} onChoose={chooseHour} today={today} />

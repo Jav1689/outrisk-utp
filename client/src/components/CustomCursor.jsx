@@ -20,14 +20,14 @@ export default function CustomCursor() {
     function onMouseMove(event) {
       mouseX = event.clientX
       mouseY = event.clientY
-      dot.style.transform = `translate(${mouseX - 6}px, ${mouseY - 6}px)`
     }
 
-    // Smooth trailing ring using lerp
+    // Smooth trailing ring and batched dot updates using translate3d
     function animate() {
-      ringX += (mouseX - ringX) * 0.15
-      ringY += (mouseY - ringY) * 0.15
-      ring.style.transform = `translate(${ringX - 18}px, ${ringY - 18}px)`
+      dot.style.transform = `translate3d(${mouseX - 6}px, ${mouseY - 6}px, 0)`
+      ringX += (mouseX - ringX) * 0.18
+      ringY += (mouseY - ringY) * 0.18
+      ring.style.transform = `translate3d(${ringX - 18}px, ${ringY - 18}px, 0)`
       animId = requestAnimationFrame(animate)
     }
 

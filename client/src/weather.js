@@ -11,7 +11,7 @@ export const ACTIVITIES = {
   sports: 'Outdoor sports',
   commuting: 'Commuting',
 }
-export const RISK_COLORS = { Safe: '#23805d', Caution: '#ad650a', Hazardous: '#bf4545', Unavailable: '#8a9991' }
+export const RISK_COLORS = { Safe: '#fff', Caution: '#ad650a', Hazardous: '#bf4545', Unavailable: '#8a9991' }
 export const FORECAST_DAYS = 7
 const clock = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Asia/Kuala_Lumpur', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', hourCycle: 'h23',
