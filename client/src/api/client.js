@@ -1,6 +1,14 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/api', timeout: 18000 })
+const rawApiUrl = import.meta.env.VITE_API_URL?.trim() || ''
+const cleanApiUrl = rawApiUrl.replace(/\/+$/, '')
+
+// If VITE_API_URL is specified, ensure it includes '/api' prefix expected by FastAPI routes
+const baseURL = cleanApiUrl
+  ? (cleanApiUrl.endsWith('/api') ? cleanApiUrl : `${cleanApiUrl}/api`)
+  : '/api'
+
+const api = axios.create({ baseURL, timeout: 18000 })
 
 export const getCurrentWeather = (location, source, signal) =>
   api.get(`/weather/current/${encodeURIComponent(location)}`, { params: { source }, signal }).then(response => response.data)
