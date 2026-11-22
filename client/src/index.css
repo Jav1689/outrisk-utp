@@ -1016,6 +1016,29 @@ main { padding-block: 20px 0; }
 .hour-risk { font-weight: 670; }
 .hour-factor { color: var(--muted); line-height: 1.25; overflow-wrap: anywhere; }
 
+.forecast-hour.forecast-hour-past,
+.forecast-hour:disabled {
+  background: rgba(230, 235, 232, 0.55);
+  border-color: rgba(210, 220, 214, 0.6);
+  color: #8a9991;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.65;
+}
+
+.forecast-hour.forecast-hour-past strong,
+.forecast-hour:disabled strong {
+  color: #718279;
+}
+
+.forecast-hour.forecast-hour-past:hover,
+.forecast-hour:disabled:hover {
+  transform: none;
+  background: rgba(230, 235, 232, 0.55);
+  border-color: rgba(210, 220, 214, 0.6);
+  box-shadow: none;
+}
+
 /* ==========================================================================
    Hourly Detail Modal (Blurry Backdrop, Zoom In/Out)
    ========================================================================== */
@@ -1023,13 +1046,15 @@ main { padding-block: 20px 0; }
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  background: rgba(14, 34, 25, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(14, 34, 25, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   animation: modalFadeIn 0.24s ease-out forwards;
 }
 

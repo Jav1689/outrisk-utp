@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ChartNoAxesCombined, ChevronDown, RefreshCw, X } from 'lucide-react'
 import { Area, Bar, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ACTIVITIES, dateLabel, RISK_COLORS, reading, timeLabel } from '../weather'
+import { ACTIVITIES, dateLabel, RISK_COLORS, reading, timeLabel, malaysiaNow } from '../weather'
 
 const dayLabel = date => dateLabel(date, { weekday: 'short', day: 'numeric', month: 'short' })
 const entryRisk = row => row.risk_level || 'Unavailable'
@@ -27,6 +28,7 @@ export default function ForecastChart({ rows, location, activity, loading, error
   const [openDates, setOpenDates] = useState(() => new Set([today]))
   const [activeModalRow, setActiveModalRow] = useState(null)
   const [modalDate, setModalDate] = useState('')
+  const [initialTime] = useState(() => malaysiaNow())
 
   function toggleDate(date) {
     setOpenDates(prev => {
@@ -119,16 +121,24 @@ export default function ForecastChart({ rows, location, activity, loading, error
                       <div className="forecast-hours">
                         {hours.map(row => {
                           const hour = Number(row.datetime.slice(11, 13))
+                          const isPast =
+                            date < initialTime.date ||
+                            (date === initialTime.date && hour < initialTime.hour)
+                          const isDisabled = !row.risk_level || isPast
+
                           return (
                             <button
                               type="button"
                               key={row.datetime}
-                              className="forecast-hour"
-                              disabled={!row.risk_level}
+                              className={`forecast-hour ${isPast ? 'forecast-hour-past' : ''}`}
+                              disabled={isDisabled}
                               onClick={() => openModal(row, date)}
+                              title={isPast ? 'Time has passed' : ''}
                             >
                               <strong>{timeLabel(hour)}</strong><span>{reading(row.temperature, '°C')}</span>
-                              <span className="hour-risk" style={{ color: RISK_COLORS[entryRisk(row)] }}>{entryRisk(row)}</span>
+                              <span className="hour-risk" style={{ color: isPast ? '#8a9991' : RISK_COLORS[entryRisk(row)] }}>
+                                {isPast ? 'Passed' : entryRisk(row)}
+                              </span>
                               {row.factors?.length > 0 && <span className="hour-factor" title={row.factors.join(' · ')}>{row.factors[0]}</span>}
                             </button>
                           )
@@ -142,7 +152,7 @@ export default function ForecastChart({ rows, location, activity, loading, error
           </div>
         </>
       )}
-      {activeModalRow && (
+      {activeModalRow && createPortal(
         <div
           className="modal-backdrop"
           onClick={e => {
@@ -221,7 +231,8 @@ export default function ForecastChart({ rows, location, activity, loading, error
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   )
