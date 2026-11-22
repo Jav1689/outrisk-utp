@@ -24,6 +24,8 @@ export default function Dashboard() {
   const resultAnchor = useRef(null)
   const locationBtnRefs = useRef({})
   const [sliderStyle, setSliderStyle] = useState({ left: 4, width: 0, opacity: 0 })
+  const navLinkRefs = useRef({})
+  const [navSliderStyle, setNavSliderStyle] = useState({ left: 4, width: 0, opacity: 0 })
   const { date: today } = malaysiaNow()
   const { location, activity } = selection
   const requestKey = `${location}/${source}/${requestNumber}`
@@ -68,6 +70,17 @@ export default function Dashboard() {
       })
     }
   }, [location])
+
+  useEffect(() => {
+    const activeEl = navLinkRefs.current[activeSection]
+    if (activeEl) {
+      setNavSliderStyle({
+        left: activeEl.offsetLeft,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      })
+    }
+  }, [activeSection])
 
   const current = currentReading?.key === requestKey ? currentReading : emptyReading
   const forecast = forecastReading?.key === forecastKey ? forecastReading : emptyReading
@@ -125,9 +138,31 @@ export default function Dashboard() {
         <div className="header-inner">
           <a className="brand" href="#overview" onClick={() => setActiveSection('overview')}><span className="brand-icon"><Compass size={24} strokeWidth={1.8} /></span>OutRisk <span>UTP</span></a>
           <nav className="nav-capsule-bar" aria-label="Main navigation">
-            <span className={`nav-slider ${activeSection}`} aria-hidden="true" />
-            <a href="#overview" className={activeSection === 'overview' ? 'active' : ''} onClick={() => setActiveSection('overview')}>Overview</a>
-            <a href="#forecast" className={activeSection === 'forecast' ? 'active' : ''} onClick={() => setActiveSection('forecast')}>Forecast</a>
+            <span
+              className="nav-slider"
+              style={{
+                transform: `translateX(${navSliderStyle.left}px)`,
+                width: `${navSliderStyle.width}px`,
+                opacity: navSliderStyle.opacity,
+              }}
+              aria-hidden="true"
+            />
+            <a
+              ref={el => { navLinkRefs.current['overview'] = el }}
+              href="#overview"
+              className={activeSection === 'overview' ? 'active' : ''}
+              onClick={() => setActiveSection('overview')}
+            >
+              Overview
+            </a>
+            <a
+              ref={el => { navLinkRefs.current['forecast'] = el }}
+              href="#forecast"
+              className={activeSection === 'forecast' ? 'active' : ''}
+              onClick={() => setActiveSection('forecast')}
+            >
+              Forecast
+            </a>
           </nav>
           <div className="timezone"><Clock3 size={15} /><span>Malaysia time</span><span className="zone-offset">UTC+8</span></div>
         </div>
