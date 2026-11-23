@@ -20,9 +20,10 @@ async def lifespan(app):
         app.state.weather = WeatherService(client)
         yield
 
+CLIENT_URL = "https://outrisk-utp.netlify.app"
 
 app = FastAPI(title="OutRisk UTP API", version="1.0.0", lifespan=lifespan)
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+origins = os.getenv("ALLOWED_ORIGINS", CLIENT_URL).split(",")
 
 app.add_middleware(
     CORSMiddleware,
