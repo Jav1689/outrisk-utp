@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -63,12 +64,46 @@ class ProjectTests(unittest.TestCase):
 
     def test_missing_aqi_cannot_hide_a_forecast_thunderstorm(self):
         row = {"temperature": 25, "apparent_temperature": 28, "precipitation": 0, "weather_code": 3, "uv_index": 1}
-        missing = predict_risk(app.state.model, {**row, "aqi": None})
-        storm = predict_risk(app.state.model, {**row, "weather_code": 95, "aqi": None})
-        self.assertIsNone(missing["risk_level"])
+        incomplete = predict_risk(app.state.model, {**row, "apparent_temperature": None, "aqi": None})
+        storm = predict_risk(app.state.model, {**row, "apparent_temperature": None, "weather_code": 95, "aqi": None})
+        self.assertIsNone(incomplete["risk_level"])
         self.assertEqual(storm["risk_level"], "Hazardous")
         self.assertIn("Thunderstorm", storm["factors"])
+        self.assertIn("Air quality unavailable", storm["factors"])
         self.assertIsNone(storm["confidence"])
+
+    def test_forecast_and_activity_routes_rate_day_seven_when_aqi_ends_early(self):
+        weather = self.client.get("/api/weather/forecast/UTP", params={"source": "sample"}).json()
+        first_missing_hour = 5 * 24
+        for row in weather["hourly"][first_missing_hour:]:
+            row.update(aqi=None, pm25=None)
+
+        with patch.object(app.state.weather, "fetch_all_data", return_value=weather):
+            response = self.client.get("/api/predict/forecast/UTP", params={"activity": "walking"})
+            self.assertEqual(response.status_code, 200)
+            hours = response.json()
+            self.assertEqual(len(hours), 168)
+            self.assertTrue(any(row["risk_level"] == "Safe" for row in hours[:first_missing_hour]))
+            for row in hours[first_missing_hour:]:
+                self.assertIn(row["risk_level"], {"Caution", "Hazardous"})
+                self.assertIn("Air quality unavailable", row["factors"])
+                self.assertIsNone(row["aqi"])
+                self.assertIsNone(row["confidence"])
+                self.assertIsNone(row["probabilities"])
+
+            last_hour = hours[-1]
+            date, time = last_hour["datetime"].split("T")
+            self.assertEqual(last_hour["risk_level"], "Caution")
+            self.assertEqual(hours[-9]["risk_level"], "Hazardous")  # 3 PM thunderstorm on day seven
+            params = {"location": "UTP", "activity": "walking", "date": date, "hour": int(time[:2])}
+            prediction = self.client.post("/api/predict/risk", json=params)
+            recommendations = self.client.post("/api/recommend/activity", json=params)
+            self.assertEqual(prediction.status_code, 200)
+            self.assertEqual(recommendations.status_code, 200)
+            self.assertEqual(prediction.json()["risk_level"], last_hour["risk_level"])
+            self.assertEqual(recommendations.json()["risk_level"], last_hour["risk_level"])
+            self.assertTrue(any("Air-quality readings are unavailable" in text for text in recommendations.json()["precautions"]))
+            self.assertEqual(recommendations.json()["alternative_times"], [])
 
     def test_tropical_morning_is_low_risk_but_showers_and_severe_weather_still_count(self):
         row = {

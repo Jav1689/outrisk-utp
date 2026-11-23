@@ -25,11 +25,12 @@ class Risk(IntEnum):
 
 
 def assess_conditions(row, *, strenuous=False):
-    """Apply the outdoor planning rules to a forecast hour."""
+    """Rate the weather alone when AQI is missing, with Caution as the minimum."""
     values = [row.get(field) for field in RISK_FIELDS]
     temperature, feels_like, precipitation, uv, aqi, code = [
         value if value is not None and isfinite(value) else None for value in values
     ]
+    missing_air_quality = ["Air quality unavailable"] if aqi is None else []
     hazardous = [
         (code in THUNDERSTORM_CODES, "Thunderstorm"),
         (code in HEAVY_PRECIPITATION_CODES or (precipitation is not None and precipitation >= 10), "Heavy precipitation"),
@@ -40,8 +41,8 @@ def assess_conditions(row, *, strenuous=False):
     ]
     severe_factors = [label for matches, label in hazardous if matches]
     if severe_factors:
-        return Risk.HAZARDOUS, severe_factors
-    if None in (temperature, feels_like, precipitation, uv, aqi, code):
+        return Risk.HAZARDOUS, severe_factors + missing_air_quality
+    if None in (temperature, feels_like, precipitation, uv, code):
         return None, []
 
     heat_threshold = STRENUOUS_HEAT_CAUTION_C if strenuous else HEAT_CAUTION_C
@@ -50,7 +51,7 @@ def assess_conditions(row, *, strenuous=False):
         (code in {45, 48}, "Fog"),
         (code in WET_WEATHER_CODES or precipitation >= 0.1, "Rain or drizzle"),
         (uv >= 6, "High UV"),
-        (aqi > 100, "U.S. AQI unhealthy for sensitive groups"),
+        (aqi is not None and aqi > 100, "U.S. AQI unhealthy for sensitive groups"),
     ]
-    factors = [label for matches, label in caution if matches]
+    factors = missing_air_quality + [label for matches, label in caution if matches]
     return (Risk.CAUTION if factors else Risk.SAFE), factors
