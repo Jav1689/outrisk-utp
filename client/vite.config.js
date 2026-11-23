@@ -14,7 +14,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
-    server: { proxy },
+    server: {
+      proxy,
+      allowedHosts: [
+        "chrome-broadways-send.ngrok-free.dev"
+      ]
+    },
     preview: { proxy },
   }
 })
