@@ -39,8 +39,10 @@ def generate_recommendations(activity, risk_level, weather_data):
         precautions.append("Seek shelter in a substantial building or enclosed vehicle during thunder.")
     elif (weather_data.get("precipitation") or 0) > 0 or weather_data.get("weather_code") in WET_WEATHER_CODES:
         precautions.append("Watch for slippery surfaces and reduced visibility.")
-    aqi = weather_data.get("aqi") or 0
-    if aqi > 150:
+    aqi = weather_data.get("aqi")
+    if aqi is None:
+        precautions.append("Air-quality readings are unavailable for this hour. Check local air quality before heading out.")
+    elif aqi > 150:
         precautions.append("Reschedule prolonged or strenuous outdoor activity until air quality improves.")
     elif aqi > 50:
         precautions.append("If you are sensitive to air pollution, check air-quality guidance before strenuous activity.")
