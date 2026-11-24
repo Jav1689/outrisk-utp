@@ -23,7 +23,8 @@ async def lifespan(app):
 CLIENT_URL = "https://outrisk-utp.netlify.app"
 
 app = FastAPI(title="OutRisk UTP API", version="1.0.0", lifespan=lifespan)
-origins = os.getenv("ALLOWED_ORIGINS", CLIENT_URL).split(",")
+default_origins = f"http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173,{CLIENT_URL}"
+origins = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", default_origins).split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
