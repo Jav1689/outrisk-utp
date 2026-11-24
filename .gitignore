@@ -226,6 +226,5 @@ __marimo__/
 # Frontend dependencies and generated model
 node_modules/
 .pnpm-store/
-server/model/risk_model.pkl
 issue.md
 prompt.txt
