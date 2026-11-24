@@ -18,7 +18,6 @@ export default defineConfig(({ mode }) => {
       proxy,
       allowedHosts: [
         "chrome-broadways-send.ngrok-free.dev",
-        "outrisk-utp-be.fastapicloud.dev"
       ]
     },
     preview: { proxy },
