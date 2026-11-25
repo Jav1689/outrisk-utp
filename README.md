@@ -1,4 +1,17 @@
-# 🌦️ OutRisk UTP
+<h1 align="center" />
+ <img width="128" height="128" alt="outrisk-icon" src="https://github.com/user-attachments/assets/c4671bdc-e5f3-47d3-864f-a0b837ef56cf" />
+ <br/>
+ <strong> 
+        🌦️ OutRisk UTP
+ </strong>
+<br/>
+<img src="https://img.shields.io/badge/Front_end-React_19-cyan?logo=react&style=for-the-badge"/>
+<img src="https://img.shields.io/badge/FE_Language-Javascript-yellow?logo=javascript&style=for-the-badge"/>
+<img src="https://img.shields.io/badge/BE_Language-Python-blue?logo=python&style=for-the-badge"/>
+<img src="https://img.shields.io/badge/Back_end-Fast_API-green?logo=fastapi&style=for-the-badge"/>
+<img src="https://img.shields.io/badge/Open_source_data-Open_Meteo-purple?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/version_1.0.0-121212?style=for-the-badge"/>
+</h1>
 
 **AI-based outdoor activity risk assessment and recommendation system for Universiti Teknologi PETRONAS (UTP) and Seri Iskandar, Perak.**
 
